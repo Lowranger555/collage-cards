@@ -19,12 +19,12 @@ function Header() {
   return (
     <header
       style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-        height: isMobile ? "58px" : "64px",
+        position: isMobile ? "static" : "fixed",
+        top: isMobile ? "auto" : 0,
+        left: isMobile ? "auto" : 0,
+        right: isMobile ? "auto" : 0,
+        zIndex: isMobile ? "auto" : 1000,
+        height: isMobile ? "auto" : "64px",
         boxSizing: "border-box",
         background: "rgba(8, 8, 9, 0.78)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -35,7 +35,7 @@ function Header() {
       <div
         style={{
           maxWidth: "1100px",
-          height: "100%",
+          height: isMobile ? "auto" : "100%",
           margin: "0 auto",
           padding: isMobile ? "10px 12px" : "12px 20px",
           boxSizing: "border-box",

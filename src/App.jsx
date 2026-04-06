@@ -10,7 +10,7 @@ function App() {
   const isMobile =
     typeof window !== "undefined" ? window.innerWidth < 760 : false;
 
-  const headerHeight = isMobile ? 58 : 64;
+  const headerHeight = isMobile ? 0 : 64;
 
   return (
     <BrowserRouter>

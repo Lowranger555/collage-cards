@@ -69,11 +69,11 @@ function Home() {
 
   return (
     <main
-      style={{
-        minHeight: "100%",
-        padding: isMobile ? "20px 16px 96px" : "40px 20px 128px"
-      }}
-    >
+  style={{
+    minHeight: "100%",
+    padding: isMobile ? "20px 16px 96px" : "40px 20px 128px"
+  }}
+>
       <div
         style={{
           maxWidth: "1100px",
