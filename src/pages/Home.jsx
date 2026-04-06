@@ -13,8 +13,8 @@ function Home() {
 
   const cardWidth = isMobile ? 320 : 360;
   const cardHeight = isMobile ? 500 : 560;
-  const stageWidth = isMobile ? 336 : 430;
-  const stageHeight = isMobile ? 532 : 610;
+  const stageWidth = isMobile ? 340 : 430;
+  const stageHeight = isMobile ? 530 : 610;
 
   function getRandomPrompt(excludeId = null, excludeCategory = null) {
     let pool = prompts;
@@ -66,7 +66,7 @@ function Home() {
     <main
       style={{
         minHeight: "calc(100vh - 73px)",
-        padding: isMobile ? "24px 16px 56px" : "40px 20px 64px"
+        padding: isMobile ? "20px 16px 56px" : "40px 20px 64px"
       }}
     >
       <div
@@ -127,7 +127,7 @@ function Home() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: isMobile ? "24px" : "18px"
+            gap: isMobile ? "28px" : "18px"
           }}
         >
           <div
@@ -204,6 +204,8 @@ function Home() {
                 prompt={currentPrompt}
                 isRevealed={isRevealed}
                 showCoverTitle={true}
+                width={cardWidth}
+                height={cardHeight}
               />
             </div>
           </div>
@@ -213,7 +215,7 @@ function Home() {
             onMouseEnter={() => setIsButtonHovered(true)}
             onMouseLeave={() => setIsButtonHovered(false)}
             style={{
-              marginTop: isMobile ? "8px" : "0",
+              marginTop: isMobile ? "12px" : "0",
               padding: "13px 22px",
               borderRadius: "999px",
               border: "1px solid rgba(255,255,255,0.12)",

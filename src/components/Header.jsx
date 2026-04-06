@@ -23,7 +23,7 @@ function Header() {
         position: "sticky",
         top: 0,
         zIndex: 100,
-        background: "rgba(8, 8, 9, 0.88)",
+        background: "rgba(8, 8, 9, 0.92)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)"
@@ -73,9 +73,7 @@ function Header() {
                     background: active
                       ? "rgba(255,255,255,0.05)"
                       : "transparent",
-                    border: active
-                      ? "1px solid rgba(255,255,255,0.08)"
-                      : "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.08)",
                     boxSizing: "border-box"
                   }}
                 >

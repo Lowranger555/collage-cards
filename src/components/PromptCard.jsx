@@ -1,7 +1,9 @@
 function PromptCard({
   prompt,
   isRevealed = false,
-  showCoverTitle = true
+  showCoverTitle = true,
+  width = 360,
+  height = 560
 }) {
   const categoryLabels = {
     constraint: "Ограничение",
@@ -19,21 +21,23 @@ function PromptCard({
     hard: 4
   };
 
-  const CARD_WIDTH = 360;
-  const CARD_HEIGHT = 560;
-  const CARD_PADDING = 18;
+  const CARD_WIDTH = width;
+  const CARD_HEIGHT = height;
+  const CARD_PADDING = width <= 320 ? 16 : 18;
+
+  const isCompact = width <= 320;
 
   const topRowStyle = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     gap: "10px",
-    marginBottom: "14px",
+    marginBottom: isCompact ? "12px" : "14px",
     flexShrink: 0
   };
 
   const labelStyle = {
-    fontSize: "9px",
+    fontSize: isCompact ? "8px" : "9px",
     textTransform: "uppercase",
     letterSpacing: "0.18em",
     color: "rgba(255,255,255,0.64)",
@@ -41,12 +45,12 @@ function PromptCard({
   };
 
   const coverCategoryStyle = {
-    fontSize: "11px",
+    fontSize: isCompact ? "10px" : "11px",
     lineHeight: 1.1,
     color: "rgba(255,255,255,0.96)",
     border: "1px solid rgba(255,255,255,0.12)",
     borderRadius: "999px",
-    padding: "7px 12px",
+    padding: isCompact ? "6px 10px" : "7px 12px",
     background: "rgba(255,255,255,0.08)",
     backdropFilter: "blur(14px) saturate(140%)",
     WebkitBackdropFilter: "blur(14px) saturate(140%)",
@@ -58,12 +62,12 @@ function PromptCard({
   };
 
   const backCategoryStyle = {
-    fontSize: "11px",
+    fontSize: isCompact ? "10px" : "11px",
     lineHeight: 1.1,
     color: "#E0DDD7",
     border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: "999px",
-    padding: "7px 12px",
+    padding: isCompact ? "6px 10px" : "7px 12px",
     background: "rgba(255,255,255,0.03)",
     flexShrink: 0,
     fontWeight: "600",
@@ -111,8 +115,8 @@ function PromptCard({
             <span
               key={index}
               style={{
-                width: "9px",
-                height: "9px",
+                width: isCompact ? "8px" : "9px",
+                height: isCompact ? "8px" : "9px",
                 borderRadius: "999px",
                 display: "inline-block",
                 background: isFilled ? "white" : "transparent",
@@ -223,7 +227,7 @@ function PromptCard({
               <h2
                 style={{
                   margin: 0,
-                  fontSize: "38px",
+                  fontSize: isCompact ? "30px" : "38px",
                   lineHeight: 0.95,
                   letterSpacing: "-0.05em",
                   color: "white",
@@ -237,7 +241,7 @@ function PromptCard({
 
             <div
               style={{
-                fontSize: showCoverTitle ? "11px" : "16px",
+                fontSize: showCoverTitle ? (isCompact ? "10px" : "11px") : "16px",
                 lineHeight: showCoverTitle ? 1.35 : 1.25,
                 color: "rgba(255,255,255,0.86)",
                 maxWidth: showCoverTitle ? "88%" : "75%",
@@ -249,20 +253,6 @@ function PromptCard({
                 ? "Нажми на карту, чтобы открыть задание"
                 : "Открой задание"}
             </div>
-
-            {!showCoverTitle && (
-              <div
-                style={{
-                  fontSize: "11px",
-                  lineHeight: 1.35,
-                  color: "rgba(255,255,255,0.72)",
-                  maxWidth: "78%",
-                  textShadow: "0 2px 10px rgba(0,0,0,0.45)"
-                }}
-              >
-                Нажми, чтобы перевернуть карту
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -306,7 +296,7 @@ function PromptCard({
           <h2
             style={{
               margin: "0 0 12px 0",
-              fontSize: "36px",
+              fontSize: isCompact ? "28px" : "36px",
               lineHeight: 0.95,
               letterSpacing: "-0.05em",
               color: "white",
@@ -320,7 +310,7 @@ function PromptCard({
             style={{
               margin: "0 0 16px 0",
               color: "#d2d2d2",
-              fontSize: "14px",
+              fontSize: isCompact ? "13px" : "14px",
               lineHeight: 1.4,
               maxWidth: "95%"
             }}
@@ -337,11 +327,11 @@ function PromptCard({
           >
             <div
               style={{
-                padding: "14px 16px",
+                padding: isCompact ? "12px 14px" : "14px 16px",
                 borderRadius: "18px",
                 background: "rgba(255,255,255,0.02)",
                 border: "1px solid rgba(255,255,255,0.05)",
-                minHeight: "98px",
+                minHeight: isCompact ? "88px" : "98px",
                 boxSizing: "border-box"
               }}
             >
@@ -360,7 +350,7 @@ function PromptCard({
                 style={{
                   color: "#f1f1f1",
                   lineHeight: 1.4,
-                  fontSize: "14px"
+                  fontSize: isCompact ? "13px" : "14px"
                 }}
               >
                 {prompt.limitation}
@@ -369,11 +359,11 @@ function PromptCard({
 
             <div
               style={{
-                padding: "14px 16px",
+                padding: isCompact ? "12px 14px" : "14px 16px",
                 borderRadius: "18px",
                 background: "rgba(255,255,255,0.02)",
                 border: "1px solid rgba(255,255,255,0.05)",
-                minHeight: "98px",
+                minHeight: isCompact ? "88px" : "98px",
                 boxSizing: "border-box"
               }}
             >
@@ -392,7 +382,7 @@ function PromptCard({
                 style={{
                   color: "#f1f1f1",
                   lineHeight: 1.4,
-                  fontSize: "14px"
+                  fontSize: isCompact ? "13px" : "14px"
                 }}
               >
                 {prompt.hint}
@@ -442,7 +432,7 @@ function PromptCard({
             >
               Время
             </div>
-            <div style={{ color: "white", fontSize: "15px" }}>
+            <div style={{ color: "white", fontSize: isCompact ? "14px" : "15px" }}>
               {prompt.duration} мин
             </div>
           </div>
