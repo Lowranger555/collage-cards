@@ -20,11 +20,11 @@ function Header() {
   return (
     <header
       style={{
-        position: isMobile ? "fixed" : "sticky",
+        position: "fixed",
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 100,
+        zIndex: 1000,
         background: "rgba(8, 8, 9, 0.92)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         backdropFilter: "blur(14px)",
