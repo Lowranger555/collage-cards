@@ -1,13 +1,29 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 function Header() {
+  const location = useLocation();
+
+  const links = [
+    { to: "/", label: "Главная" },
+    { to: "/catalog", label: "Каталог" },
+    { to: "/guest-cards", label: "Гостевые карты" },
+    { to: "/about", label: "О проекте" }
+  ];
+
+  const isMobile =
+    typeof window !== "undefined" ? window.innerWidth < 760 : false;
+
+  function isActive(path) {
+    return location.pathname === path;
+  }
+
   return (
     <header
       style={{
         position: "sticky",
         top: 0,
-        zIndex: 50,
-        background: "rgba(8, 8, 9, 0.72)",
+        zIndex: 100,
+        background: "rgba(8, 8, 9, 0.88)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)"
@@ -17,41 +33,105 @@ function Header() {
         style={{
           maxWidth: "1100px",
           margin: "0 auto",
-          padding: "12px 20px",
-          display: "flex",
-          justifyContent: "center"
+          padding: isMobile ? "10px 12px" : "12px 20px"
         }}
       >
-        <nav
-          style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
-            justifyContent: "center"
-          }}
-        >
-          <Link to="/" style={linkStyle}>Главная</Link>
-          <Link to="/catalog" style={linkStyle}>Каталог</Link>
-          <Link to="/guest-cards" style={linkStyle}>Гостевые карты</Link>
-          <Link to="/about" style={linkStyle}>О проекте</Link>
-        </nav>
+        {isMobile ? (
+          <nav
+            style={{
+              display: "flex",
+              gap: "8px",
+              overflowX: "auto",
+              overflowY: "hidden",
+              whiteSpace: "nowrap",
+              WebkitOverflowScrolling: "touch",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none"
+            }}
+          >
+            {links.map((link) => {
+              const active = isActive(link.to);
+
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  style={{
+                    flex: "0 0 auto",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "38px",
+                    padding: "0 14px",
+                    borderRadius: "999px",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                    color: active ? "white" : "rgba(255,255,255,0.68)",
+                    fontSize: "14px",
+                    lineHeight: 1,
+                    fontWeight: "600",
+                    background: active
+                      ? "rgba(255,255,255,0.05)"
+                      : "transparent",
+                    border: active
+                      ? "1px solid rgba(255,255,255,0.08)"
+                      : "1px solid rgba(255,255,255,0.08)",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        ) : (
+          <nav
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "8px",
+              flexWrap: "wrap"
+            }}
+          >
+            {links.map((link) => {
+              const active = isActive(link.to);
+
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: "140px",
+                    height: "40px",
+                    padding: "0 14px",
+                    borderRadius: "999px",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                    color: active ? "white" : "rgba(255,255,255,0.66)",
+                    fontSize: "14px",
+                    lineHeight: 1,
+                    fontWeight: "600",
+                    background: active
+                      ? "rgba(255,255,255,0.04)"
+                      : "transparent",
+                    border: active
+                      ? "1px solid rgba(255,255,255,0.07)"
+                      : "1px solid transparent",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </div>
     </header>
   );
 }
-
-const linkStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  height: "40px",
-  padding: "0 14px",
-  borderRadius: "999px",
-  textDecoration: "none",
-  color: "rgba(255,255,255,0.82)",
-  fontSize: "14px",
-  fontWeight: "600",
-  border: "1px solid rgba(255,255,255,0.08)"
-};
 
 export default Header;

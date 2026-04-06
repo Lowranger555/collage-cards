@@ -13,8 +13,8 @@ function Home() {
 
   const cardWidth = isMobile ? 320 : 360;
   const cardHeight = isMobile ? 500 : 560;
-  const stageWidth = isMobile ? 350 : 430;
-  const stageHeight = isMobile ? 540 : 610;
+  const stageWidth = isMobile ? 336 : 430;
+  const stageHeight = isMobile ? 532 : 610;
 
   function getRandomPrompt(excludeId = null, excludeCategory = null) {
     let pool = prompts;
@@ -66,7 +66,7 @@ function Home() {
     <main
       style={{
         minHeight: "calc(100vh - 73px)",
-        padding: isMobile ? "28px 16px 56px" : "40px 20px 64px"
+        padding: isMobile ? "24px 16px 56px" : "40px 20px 64px"
       }}
     >
       <div
@@ -97,7 +97,7 @@ function Home() {
 
           <h1
             style={{
-              margin: "0 0 16px 0",
+              margin: "0 0 14px 0",
               fontSize: "clamp(30px, 5vw, 54px)",
               lineHeight: 1,
               color: "white",
@@ -126,7 +126,8 @@ function Home() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: isMobile ? "16px" : "18px"
+            justifyContent: "center",
+            gap: isMobile ? "24px" : "18px"
           }}
         >
           <div
@@ -134,6 +135,7 @@ function Home() {
               position: "relative",
               width: `${stageWidth}px`,
               height: `${stageHeight}px`,
+              margin: "0 auto",
               display: "flex",
               alignItems: "center",
               justifyContent: "center"
@@ -146,13 +148,15 @@ function Home() {
                 height: `${cardHeight}px`,
                 borderRadius: "28px",
                 background: "rgba(255,255,255,0.02)",
+                left: "50%",
+                top: "50%",
                 transform: isChangingCard
                   ? isMobile
-                    ? "translate(20px, 12px) rotate(4.2deg)"
-                    : "translate(25px, 15px) rotate(4.2deg)"
+                    ? "translate(calc(-50% + 16px), calc(-50% + 10px)) rotate(4.2deg)"
+                    : "translate(calc(-50% + 25px), calc(-50% + 15px)) rotate(4.2deg)"
                   : isMobile
-                  ? "translate(18px, 11px) rotate(4deg)"
-                  : "translate(24px, 14px) rotate(4deg)",
+                  ? "translate(calc(-50% + 14px), calc(-50% + 9px)) rotate(4deg)"
+                  : "translate(calc(-50% + 24px), calc(-50% + 14px)) rotate(4deg)",
                 transition: "transform 220ms ease",
                 pointerEvents: "none"
               }}
@@ -165,13 +169,15 @@ function Home() {
                 height: `${cardHeight}px`,
                 borderRadius: "28px",
                 background: "rgba(255,255,255,0.03)",
+                left: "50%",
+                top: "50%",
                 transform: isChangingCard
                   ? isMobile
-                    ? "translate(9px, 6px) rotate(2.1deg)"
-                    : "translate(11px, 7px) rotate(2.1deg)"
+                    ? "translate(calc(-50% + 7px), calc(-50% + 5px)) rotate(2.1deg)"
+                    : "translate(calc(-50% + 11px), calc(-50% + 7px)) rotate(2.1deg)"
                   : isMobile
-                  ? "translate(8px, 5px) rotate(2deg)"
-                  : "translate(10px, 6px) rotate(2deg)",
+                  ? "translate(calc(-50% + 6px), calc(-50% + 4px)) rotate(2deg)"
+                  : "translate(calc(-50% + 10px), calc(-50% + 6px)) rotate(2deg)",
                 transition: "transform 220ms ease",
                 pointerEvents: "none"
               }}
@@ -187,7 +193,7 @@ function Home() {
                 zIndex: 2,
                 transform: isChangingCard
                   ? isMobile
-                    ? "translate(3px, 4px)"
+                    ? "translate(2px, 3px)"
                     : "translate(4px, 6px)"
                   : "translate(0px, 0px)",
                 opacity: isChangingCard ? 0.94 : 1,
@@ -207,6 +213,7 @@ function Home() {
             onMouseEnter={() => setIsButtonHovered(true)}
             onMouseLeave={() => setIsButtonHovered(false)}
             style={{
+              marginTop: isMobile ? "8px" : "0",
               padding: "13px 22px",
               borderRadius: "999px",
               border: "1px solid rgba(255,255,255,0.12)",
