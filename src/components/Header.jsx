@@ -2,6 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 
 function Header() {
   const location = useLocation();
+  const isMobile =
+    typeof window !== "undefined" ? window.innerWidth < 760 : false;
 
   const links = [
     { to: "/", label: "Главная" },
@@ -9,9 +11,6 @@ function Header() {
     { to: "/guest-cards", label: "Гостевые карты" },
     { to: "/about", label: "О проекте" }
   ];
-
-  const isMobile =
-    typeof window !== "undefined" ? window.innerWidth < 760 : false;
 
   function isActive(path) {
     return location.pathname === path;
@@ -25,28 +24,37 @@ function Header() {
         left: 0,
         right: 0,
         zIndex: 1000,
-        background: "rgba(8, 8, 9, 0.92)",
+        height: isMobile ? "58px" : "64px",
+        boxSizing: "border-box",
+        background: "rgba(8, 8, 9, 0.78)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)"
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)"
       }}
     >
       <div
         style={{
           maxWidth: "1100px",
+          height: "100%",
           margin: "0 auto",
-          padding: isMobile ? "10px 12px" : "12px 20px"
+          padding: isMobile ? "10px 12px" : "12px 20px",
+          boxSizing: "border-box",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
         }}
       >
         {isMobile ? (
           <nav
             style={{
+              width: "100%",
               display: "flex",
               gap: "8px",
               overflowX: "auto",
               overflowY: "hidden",
               whiteSpace: "nowrap",
               WebkitOverflowScrolling: "touch",
+              overscrollBehaviorX: "contain",
               scrollbarWidth: "none",
               msOverflowStyle: "none"
             }}
@@ -63,7 +71,7 @@ function Header() {
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    height: "38px",
+                    height: "36px",
                     padding: "0 14px",
                     borderRadius: "999px",
                     textDecoration: "none",
@@ -73,7 +81,7 @@ function Header() {
                     lineHeight: 1,
                     fontWeight: "600",
                     background: active
-                      ? "rgba(255,255,255,0.05)"
+                      ? "rgba(255,255,255,0.06)"
                       : "transparent",
                     border: "1px solid rgba(255,255,255,0.08)",
                     boxSizing: "border-box"
@@ -88,6 +96,7 @@ function Header() {
           <nav
             style={{
               display: "flex",
+              alignItems: "center",
               justifyContent: "center",
               gap: "8px",
               flexWrap: "wrap"
@@ -115,10 +124,10 @@ function Header() {
                     lineHeight: 1,
                     fontWeight: "600",
                     background: active
-                      ? "rgba(255,255,255,0.04)"
+                      ? "rgba(255,255,255,0.05)"
                       : "transparent",
                     border: active
-                      ? "1px solid rgba(255,255,255,0.07)"
+                      ? "1px solid rgba(255,255,255,0.08)"
                       : "1px solid transparent",
                     boxSizing: "border-box"
                   }}

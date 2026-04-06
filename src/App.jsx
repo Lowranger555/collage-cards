@@ -7,6 +7,11 @@ import GuestCards from "./pages/GuestCards";
 import About from "./pages/About";
 
 function App() {
+  const isMobile =
+    typeof window !== "undefined" ? window.innerWidth < 760 : false;
+
+  const headerHeight = isMobile ? 58 : 64;
+
   return (
     <BrowserRouter>
       <div
@@ -20,7 +25,12 @@ function App() {
       >
         <Header />
 
-        <div style={{ flex: 1 }}>
+        <div
+          style={{
+            flex: 1,
+            paddingTop: `${headerHeight}px`
+          }}
+        >
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/catalog" element={<CatalogPage />} />
