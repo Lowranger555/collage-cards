@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { prompts } from "../data/prompts";
 import PromptCard from "../components/PromptCard";
 
@@ -15,6 +15,12 @@ function Home() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [isChangingCard, setIsChangingCard] = useState(false);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+
+  const [swipePhase, setSwipePhase] = useState("idle");
+  const [swipeDirection, setSwipeDirection] = useState(0);
+
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const touchCurrentRef = useRef({ x: 0, y: 0 });
 
   const cardWidth = isMobile ? 320 : 360;
   const cardHeight = isMobile ? 500 : 560;
@@ -42,10 +48,34 @@ function Home() {
     return pool[randomIndex];
   }
 
-  function nextCard() {
+  function changeCardWithDirection(direction = 1) {
     if (isChangingCard) return;
 
     setIsChangingCard(true);
+    setSwipeDirection(direction);
+
+    if (isMobile) {
+      setSwipePhase("out");
+
+      window.setTimeout(() => {
+        const randomPrompt = getRandomPrompt(
+          currentPrompt?.id ?? null,
+          currentPrompt?.category ?? null
+        );
+
+        setCurrentPrompt(randomPrompt);
+        setIsRevealed(false);
+        setSwipePhase("in");
+      }, 180);
+
+      window.setTimeout(() => {
+        setSwipePhase("idle");
+        setSwipeDirection(0);
+        setIsChangingCard(false);
+      }, 360);
+
+      return;
+    }
 
     window.setTimeout(() => {
       const randomPrompt = getRandomPrompt(
@@ -62,18 +92,105 @@ function Home() {
     }, 260);
   }
 
+  function nextCard() {
+    changeCardWithDirection(1);
+  }
+
   function flipCard() {
     if (isChangingCard) return;
     setIsRevealed((prev) => !prev);
   }
 
+  function handleTouchStart(event) {
+    if (!isMobile || isChangingCard) return;
+
+    const touch = event.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY
+    };
+    touchCurrentRef.current = {
+      x: touch.clientX,
+      y: touch.clientY
+    };
+  }
+
+  function handleTouchMove(event) {
+    if (!isMobile || isChangingCard) return;
+
+    const touch = event.touches[0];
+    touchCurrentRef.current = {
+      x: touch.clientX,
+      y: touch.clientY
+    };
+  }
+
+  function handleTouchEnd() {
+    if (!isMobile || isChangingCard) return;
+
+    const deltaX = touchCurrentRef.current.x - touchStartRef.current.x;
+    const deltaY = touchCurrentRef.current.y - touchStartRef.current.y;
+
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    const isTap = absX < 10 && absY < 10;
+    const isSwipe = absX > 55 && absY < 50;
+
+    if (isSwipe) {
+      changeCardWithDirection(deltaX >= 0 ? 1 : -1);
+      return;
+    }
+
+    if (isTap) {
+      flipCard();
+    }
+  }
+
+  function getFrontCardTransform() {
+    if (isMobile) {
+      if (swipePhase === "out") {
+        const distance = swipeDirection > 0 ? 420 : -420;
+        const rotate = swipeDirection > 0 ? 14 : -14;
+        return `translate(${distance}px, 8px) rotate(${rotate}deg)`;
+      }
+
+      if (swipePhase === "in") {
+        const from = swipeDirection > 0 ? -120 : 120;
+        return `translate(${from}px, 0px) scale(0.98)`;
+      }
+
+      return "translate(0px, 0px)";
+    }
+
+    return isChangingCard ? "translate(4px, 6px)" : "translate(0px, 0px)";
+  }
+
+  function getFrontCardOpacity() {
+    if (isMobile) {
+      if (swipePhase === "out") return 0;
+      if (swipePhase === "in") return 0.92;
+      return 1;
+    }
+
+    return isChangingCard ? 0.94 : 1;
+  }
+
+  function getFrontCardTransition() {
+    if (isMobile) {
+      return "transform 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease";
+    }
+
+    return "transform 220ms ease, opacity 180ms ease";
+  }
+
   return (
     <main
-  style={{
-    minHeight: "100%",
-    padding: isMobile ? "20px 16px 96px" : "40px 20px 128px"
-  }}
->
+      style={{
+        minHeight: "100%",
+        padding: isMobile ? "20px 16px 96px" : "40px 20px 128px"
+      }}
+    >
       <div
         style={{
           maxWidth: "1100px",
@@ -132,7 +249,7 @@ function Home() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: isMobile ? "28px" : "24px"
+            gap: isMobile ? "16px" : "24px"
           }}
         >
           <div
@@ -143,7 +260,8 @@ function Home() {
               margin: "0 auto",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center"
+              justifyContent: "center",
+              overflow: "hidden"
             }}
           >
             <div
@@ -155,12 +273,10 @@ function Home() {
                 background: "rgba(255,255,255,0.02)",
                 left: "50%",
                 top: "50%",
-                transform: isChangingCard
-                  ? isMobile
-                    ? "translate(calc(-50% + 16px), calc(-50% + 10px)) rotate(4.2deg)"
-                    : "translate(calc(-50% + 25px), calc(-50% + 15px)) rotate(4.2deg)"
-                  : isMobile
+                transform: isMobile
                   ? "translate(calc(-50% + 14px), calc(-50% + 9px)) rotate(4deg)"
+                  : isChangingCard
+                  ? "translate(calc(-50% + 25px), calc(-50% + 15px)) rotate(4.2deg)"
                   : "translate(calc(-50% + 24px), calc(-50% + 14px)) rotate(4deg)",
                 transition: "transform 220ms ease",
                 pointerEvents: "none"
@@ -176,12 +292,10 @@ function Home() {
                 background: "rgba(255,255,255,0.03)",
                 left: "50%",
                 top: "50%",
-                transform: isChangingCard
-                  ? isMobile
-                    ? "translate(calc(-50% + 7px), calc(-50% + 5px)) rotate(2.1deg)"
-                    : "translate(calc(-50% + 11px), calc(-50% + 7px)) rotate(2.1deg)"
-                  : isMobile
+                transform: isMobile
                   ? "translate(calc(-50% + 6px), calc(-50% + 4px)) rotate(2deg)"
+                  : isChangingCard
+                  ? "translate(calc(-50% + 11px), calc(-50% + 7px)) rotate(2.1deg)"
                   : "translate(calc(-50% + 10px), calc(-50% + 6px)) rotate(2deg)",
                 transition: "transform 220ms ease",
                 pointerEvents: "none"
@@ -189,20 +303,20 @@ function Home() {
             />
 
             <div
-              onClick={flipCard}
+              onClick={isMobile ? undefined : flipCard}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               style={{
                 position: "relative",
                 width: `${cardWidth}px`,
                 height: `${cardHeight}px`,
                 cursor: isChangingCard ? "default" : "pointer",
                 zIndex: 2,
-                transform: isChangingCard
-                  ? isMobile
-                    ? "translate(2px, 3px)"
-                    : "translate(4px, 6px)"
-                  : "translate(0px, 0px)",
-                opacity: isChangingCard ? 0.94 : 1,
-                transition: "transform 220ms ease, opacity 180ms ease"
+                touchAction: "pan-y",
+                transform: getFrontCardTransform(),
+                opacity: getFrontCardOpacity(),
+                transition: getFrontCardTransition()
               }}
             >
               <PromptCard
@@ -215,32 +329,46 @@ function Home() {
             </div>
           </div>
 
-          <button
-            onClick={nextCard}
-            onMouseEnter={() => setIsButtonHovered(true)}
-            onMouseLeave={() => setIsButtonHovered(false)}
-            style={{
-              marginTop: isMobile ? "8px" : "0",
-              padding: "13px 22px",
-              borderRadius: "999px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: isButtonHovered
-                ? "rgba(255,255,255,0.08)"
-                : "rgba(255,255,255,0.04)",
-              backdropFilter: isButtonHovered ? "blur(10px)" : "blur(0px)",
-              WebkitBackdropFilter: isButtonHovered ? "blur(10px)" : "blur(0px)",
-              color: "white",
-              cursor: isChangingCard ? "default" : "pointer",
-              fontSize: "14px",
-              fontWeight: "600",
-              letterSpacing: "0.01em",
-              opacity: isChangingCard ? 0.7 : 1,
-              transition:
-                "opacity 180ms ease, background 160ms ease, backdrop-filter 160ms ease, -webkit-backdrop-filter 160ms ease"
-            }}
-          >
-            Новая карта
-          </button>
+          {isMobile ? (
+            <div
+              style={{
+                fontSize: "12px",
+                lineHeight: 1.4,
+                color: "rgba(255,255,255,0.58)",
+                textAlign: "center",
+                letterSpacing: "0.01em"
+              }}
+            >
+              ⇄ Свайпни в любую сторону, чтобы получить новую карту
+            </div>
+          ) : (
+            <button
+              onClick={nextCard}
+              onMouseEnter={() => setIsButtonHovered(true)}
+              onMouseLeave={() => setIsButtonHovered(false)}
+              style={{
+                marginTop: "8px",
+                padding: "13px 22px",
+                borderRadius: "999px",
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: isButtonHovered
+                  ? "rgba(255,255,255,0.08)"
+                  : "rgba(255,255,255,0.04)",
+                backdropFilter: isButtonHovered ? "blur(10px)" : "blur(0px)",
+                WebkitBackdropFilter: isButtonHovered ? "blur(10px)" : "blur(0px)",
+                color: "white",
+                cursor: isChangingCard ? "default" : "pointer",
+                fontSize: "14px",
+                fontWeight: "600",
+                letterSpacing: "0.01em",
+                opacity: isChangingCard ? 0.7 : 1,
+                transition:
+                  "opacity 180ms ease, background 160ms ease, backdrop-filter 160ms ease, -webkit-backdrop-filter 160ms ease"
+              }}
+            >
+              Новая карта
+            </button>
+          )}
         </div>
       </div>
     </main>
