@@ -51,7 +51,7 @@ function Home() {
     return pool[randomIndex];
   }
 
-  function resetDragState() {
+  function resetSwipeState() {
     setDragX(0);
     setIsDragging(false);
     setIsAnimatingOut(false);
@@ -125,8 +125,8 @@ function Home() {
       }
     }
 
-    // Только влево
-    const limitedX = Math.max(-190, Math.min(0, deltaX));
+    // только влево
+    const limitedX = Math.max(-220, Math.min(0, deltaX));
     setDragX(limitedX);
   }
 
@@ -144,7 +144,7 @@ function Home() {
 
     if (isTap) {
       setNextPrompt(null);
-      resetDragState();
+      resetSwipeState();
       flipCard();
       return;
     }
@@ -152,20 +152,26 @@ function Home() {
     if (passedSwipeThreshold && nextPrompt) {
       setIsChangingCard(true);
       setIsAnimatingOut(true);
-      setDragX(-(stageWidth + 120));
+
+      const exitDistance =
+        typeof window !== "undefined"
+          ? -(window.innerWidth + cardWidth)
+          : -(stageWidth + 240);
+
+      setDragX(exitDistance);
 
       window.setTimeout(() => {
         setCurrentPrompt(nextPrompt);
         setNextPrompt(null);
         setIsRevealed(false);
-        resetDragState();
+        resetSwipeState();
         setIsChangingCard(false);
-      }, 260);
+      }, 220);
 
       return;
     }
 
-    // Возврат назад, если свайп слабый
+    // мягкий возврат
     setDragX(0);
     setIsDragging(false);
     dragIntentRef.current = false;
@@ -174,31 +180,30 @@ function Home() {
       if (!isDragging && !isAnimatingOut) {
         setNextPrompt(null);
       }
-    }, 220);
+    }, 180);
   }
 
   const dragProgress = Math.min(Math.abs(dragX) / 140, 1);
 
-  // Фронтальная карта: мягче и спокойнее
-  const frontRotation = isMobile ? dragX * 0.035 : 0;
-  const frontLift = isMobile ? -dragProgress * 2 : 0;
-
+  const frontRotation = isMobile ? dragX * 0.03 : 0;
   const frontTransform = isMobile
-    ? `translate(${dragX}px, ${frontLift}px) rotate(${frontRotation}deg)`
+    ? `translateX(${dragX}px) rotate(${frontRotation}deg)`
     : isChangingCard
     ? "translate(4px, 6px)"
     : "translate(0px, 0px)";
 
+  const frontOpacity = isMobile && isAnimatingOut ? 0.94 : 1;
+
   const frontTransition = isMobile
     ? isDragging
       ? "none"
-      : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease"
+      : "transform 200ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease"
     : "transform 220ms ease, opacity 180ms ease";
 
-  // Следующая карта: строго по центру, без бокового увода
-  const backCardScale = 0.975 + dragProgress * 0.025;
-  const backCardTranslateY = 10 - dragProgress * 10;
-  const backCardOpacity = nextPrompt ? 0.2 + dragProgress * 0.8 : 0;
+  // следующая карта всегда по центру, без бокового смещения и без поворота
+  const backCardScale = 0.985 + dragProgress * 0.015;
+  const backCardTranslateY = 8 - dragProgress * 8;
+  const backCardOpacity = nextPrompt ? 0.18 + dragProgress * 0.82 : 0;
 
   return (
     <main
@@ -277,7 +282,7 @@ function Home() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              overflow: "hidden"
+              overflow: "visible"
             }}
           >
             {!isMobile && (
@@ -291,7 +296,8 @@ function Home() {
                     background: "rgba(255,255,255,0.02)",
                     left: "50%",
                     top: "50%",
-                    transform: "translate(calc(-50% + 24px), calc(-50% + 14px)) rotate(4deg)",
+                    transform:
+                      "translate(calc(-50% + 24px), calc(-50% + 14px)) rotate(4deg)",
                     transition: "transform 220ms ease",
                     pointerEvents: "none"
                   }}
@@ -306,7 +312,8 @@ function Home() {
                     background: "rgba(255,255,255,0.03)",
                     left: "50%",
                     top: "50%",
-                    transform: "translate(calc(-50% + 10px), calc(-50% + 6px)) rotate(2deg)",
+                    transform:
+                      "translate(calc(-50% + 10px), calc(-50% + 6px)) rotate(2deg)",
                     transition: "transform 220ms ease",
                     pointerEvents: "none"
                   }}
@@ -326,7 +333,7 @@ function Home() {
                   opacity: backCardOpacity,
                   transition: isDragging
                     ? "none"
-                    : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease",
+                    : "transform 180ms ease, opacity 140ms ease",
                   pointerEvents: "none",
                   zIndex: 1
                 }}
@@ -354,7 +361,7 @@ function Home() {
                 zIndex: 2,
                 touchAction: "pan-y",
                 transform: frontTransform,
-                opacity: isChangingCard && !isMobile ? 0.94 : 1,
+                opacity: frontOpacity,
                 transition: frontTransition,
                 willChange: "transform"
               }}
