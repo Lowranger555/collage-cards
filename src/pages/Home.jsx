@@ -12,15 +12,18 @@ function Home() {
   }, []);
 
   const [currentPrompt, setCurrentPrompt] = useState(initialPrompt);
+  const [nextPrompt, setNextPrompt] = useState(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isChangingCard, setIsChangingCard] = useState(false);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
-  const [swipePhase, setSwipePhase] = useState("idle");
-  const [swipeDirection, setSwipeDirection] = useState(0);
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
   const touchStartRef = useRef({ x: 0, y: 0 });
   const touchCurrentRef = useRef({ x: 0, y: 0 });
+  const dragIntentRef = useRef(false);
 
   const cardWidth = isMobile ? 320 : 360;
   const cardHeight = isMobile ? 500 : 560;
@@ -48,34 +51,17 @@ function Home() {
     return pool[randomIndex];
   }
 
-  function changeCardWithDirection(direction = 1) {
+  function resetDragState() {
+    setDragX(0);
+    setIsDragging(false);
+    setIsAnimatingOut(false);
+    dragIntentRef.current = false;
+  }
+
+  function nextCardDesktop() {
     if (isChangingCard) return;
 
     setIsChangingCard(true);
-    setSwipeDirection(direction);
-
-    if (isMobile) {
-      setSwipePhase("out");
-
-      window.setTimeout(() => {
-        const randomPrompt = getRandomPrompt(
-          currentPrompt?.id ?? null,
-          currentPrompt?.category ?? null
-        );
-
-        setCurrentPrompt(randomPrompt);
-        setIsRevealed(false);
-        setSwipePhase("in");
-      }, 180);
-
-      window.setTimeout(() => {
-        setSwipePhase("idle");
-        setSwipeDirection(0);
-        setIsChangingCard(false);
-      }, 360);
-
-      return;
-    }
 
     window.setTimeout(() => {
       const randomPrompt = getRandomPrompt(
@@ -92,17 +78,13 @@ function Home() {
     }, 260);
   }
 
-  function nextCard() {
-    changeCardWithDirection(1);
-  }
-
   function flipCard() {
-    if (isChangingCard) return;
+    if (isChangingCard || isDragging || isAnimatingOut) return;
     setIsRevealed((prev) => !prev);
   }
 
   function handleTouchStart(event) {
-    if (!isMobile || isChangingCard) return;
+    if (!isMobile || isChangingCard || isAnimatingOut) return;
 
     const touch = event.touches[0];
     touchStartRef.current = {
@@ -113,20 +95,42 @@ function Home() {
       x: touch.clientX,
       y: touch.clientY
     };
+    dragIntentRef.current = false;
+
+    const preparedNext = getRandomPrompt(
+      currentPrompt?.id ?? null,
+      currentPrompt?.category ?? null
+    );
+    setNextPrompt(preparedNext);
   }
 
   function handleTouchMove(event) {
-    if (!isMobile || isChangingCard) return;
+    if (!isMobile || isChangingCard || isAnimatingOut) return;
 
     const touch = event.touches[0];
     touchCurrentRef.current = {
       x: touch.clientX,
       y: touch.clientY
     };
+
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+
+    if (!dragIntentRef.current) {
+      if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        dragIntentRef.current = true;
+        setIsDragging(true);
+      } else {
+        return;
+      }
+    }
+
+    const limitedX = Math.max(-220, Math.min(0, deltaX));
+    setDragX(limitedX);
   }
 
   function handleTouchEnd() {
-    if (!isMobile || isChangingCard) return;
+    if (!isMobile || isChangingCard || isAnimatingOut) return;
 
     const deltaX = touchCurrentRef.current.x - touchStartRef.current.x;
     const deltaY = touchCurrentRef.current.y - touchStartRef.current.y;
@@ -135,54 +139,63 @@ function Home() {
     const absY = Math.abs(deltaY);
 
     const isTap = absX < 10 && absY < 10;
-    const isSwipe = absX > 55 && absY < 50;
+    const passedSwipeThreshold = deltaX < -85 && Math.abs(deltaX) > absY;
 
-    if (isSwipe) {
-      changeCardWithDirection(deltaX >= 0 ? 1 : -1);
+    if (isTap) {
+      setNextPrompt(null);
+      resetDragState();
+      flipCard();
       return;
     }
 
-    if (isTap) {
-      flipCard();
-    }
-  }
+    if (passedSwipeThreshold && nextPrompt) {
+      setIsChangingCard(true);
+      setIsAnimatingOut(true);
+      setDragX(-(stageWidth + 140));
 
-  function getFrontCardTransform() {
-    if (isMobile) {
-      if (swipePhase === "out") {
-        const distance = swipeDirection > 0 ? 420 : -420;
-        const rotate = swipeDirection > 0 ? 14 : -14;
-        return `translate(${distance}px, 8px) rotate(${rotate}deg)`;
+      window.setTimeout(() => {
+        setCurrentPrompt(nextPrompt);
+        setNextPrompt(null);
+        setIsRevealed(false);
+        resetDragState();
+        setIsChangingCard(false);
+      }, 320);
+
+      return;
+    }
+
+    setDragX(0);
+    setIsDragging(false);
+    dragIntentRef.current = false;
+
+    window.setTimeout(() => {
+      if (!isDragging && !isAnimatingOut) {
+        setNextPrompt(null);
       }
-
-      if (swipePhase === "in") {
-        const from = swipeDirection > 0 ? -120 : 120;
-        return `translate(${from}px, 0px) scale(0.98)`;
-      }
-
-      return "translate(0px, 0px)";
-    }
-
-    return isChangingCard ? "translate(4px, 6px)" : "translate(0px, 0px)";
+    }, 260);
   }
 
-  function getFrontCardOpacity() {
-    if (isMobile) {
-      if (swipePhase === "out") return 0;
-      if (swipePhase === "in") return 0.92;
-      return 1;
-    }
+  const dragProgress = Math.min(Math.abs(dragX) / 140, 1);
+  const frontRotation = isMobile ? dragX * 0.045 : 0;
+  const frontLift = isMobile ? -dragProgress * 4 : 0;
 
-    return isChangingCard ? 0.94 : 1;
-  }
+  const frontTransform = isMobile
+    ? `translate(${dragX}px, ${frontLift}px) rotate(${frontRotation}deg)`
+    : isChangingCard
+    ? "translate(4px, 6px)"
+    : "translate(0px, 0px)";
 
-  function getFrontCardTransition() {
-    if (isMobile) {
-      return "transform 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease";
-    }
+  const frontTransition = isMobile
+    ? isDragging
+      ? "none"
+      : "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease"
+    : "transform 220ms ease, opacity 180ms ease";
 
-    return "transform 220ms ease, opacity 180ms ease";
-  }
+  const backCardScale = 0.955 + dragProgress * 0.045;
+  const backCardTranslateY = 14 - dragProgress * 14;
+  const backCardTranslateX = 10 - dragProgress * 10;
+  const backCardOpacity = nextPrompt ? 0.28 + dragProgress * 0.72 : 0;
+  const backCardRotation = dragX * -0.012;
 
   return (
     <main
@@ -273,11 +286,7 @@ function Home() {
                 background: "rgba(255,255,255,0.02)",
                 left: "50%",
                 top: "50%",
-                transform: isMobile
-                  ? "translate(calc(-50% + 14px), calc(-50% + 9px)) rotate(4deg)"
-                  : isChangingCard
-                  ? "translate(calc(-50% + 25px), calc(-50% + 15px)) rotate(4.2deg)"
-                  : "translate(calc(-50% + 24px), calc(-50% + 14px)) rotate(4deg)",
+                transform: "translate(calc(-50% + 14px), calc(-50% + 9px)) rotate(4deg)",
                 transition: "transform 220ms ease",
                 pointerEvents: "none"
               }}
@@ -292,15 +301,39 @@ function Home() {
                 background: "rgba(255,255,255,0.03)",
                 left: "50%",
                 top: "50%",
-                transform: isMobile
-                  ? "translate(calc(-50% + 6px), calc(-50% + 4px)) rotate(2deg)"
-                  : isChangingCard
-                  ? "translate(calc(-50% + 11px), calc(-50% + 7px)) rotate(2.1deg)"
-                  : "translate(calc(-50% + 10px), calc(-50% + 6px)) rotate(2deg)",
+                transform: "translate(calc(-50% + 6px), calc(-50% + 4px)) rotate(2deg)",
                 transition: "transform 220ms ease",
                 pointerEvents: "none"
               }}
             />
+
+            {isMobile && nextPrompt ? (
+              <div
+                style={{
+                  position: "absolute",
+                  width: `${cardWidth}px`,
+                  height: `${cardHeight}px`,
+                  left: "50%",
+                  top: "50%",
+                  transform: `translate(calc(-50% + ${backCardTranslateX}px), calc(-50% + ${backCardTranslateY}px)) scale(${backCardScale}) rotate(${backCardRotation}deg)`,
+                  opacity: backCardOpacity,
+                  transition: isDragging
+                    ? "none"
+                    : "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease",
+                  pointerEvents: "none",
+                  zIndex: 1,
+                  filter: `blur(${(1 - dragProgress) * 0.4}px)`
+                }}
+              >
+                <PromptCard
+                  prompt={nextPrompt}
+                  isRevealed={false}
+                  showCoverTitle={true}
+                  width={cardWidth}
+                  height={cardHeight}
+                />
+              </div>
+            ) : null}
 
             <div
               onClick={isMobile ? undefined : flipCard}
@@ -314,9 +347,10 @@ function Home() {
                 cursor: isChangingCard ? "default" : "pointer",
                 zIndex: 2,
                 touchAction: "pan-y",
-                transform: getFrontCardTransform(),
-                opacity: getFrontCardOpacity(),
-                transition: getFrontCardTransition()
+                transform: frontTransform,
+                opacity: isChangingCard && !isMobile ? 0.94 : 1,
+                transition: frontTransition,
+                willChange: "transform"
               }}
             >
               <PromptCard
@@ -339,11 +373,11 @@ function Home() {
                 letterSpacing: "0.01em"
               }}
             >
-              ⇄ Свайпни в любую сторону, чтобы получить новую карту
+              ← Потяни карту влево, чтобы достать новую
             </div>
           ) : (
             <button
-              onClick={nextCard}
+              onClick={nextCardDesktop}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
               style={{
