@@ -26,6 +26,7 @@ function Home() {
   const isDraggingRef = useRef(false);
   const dragStartedRef = useRef(false);
   const preparedNextRef = useRef(null);
+  const suppressClickRef = useRef(false);
 
   const cardWidth = isMobile ? 320 : 360;
   const cardHeight = isMobile ? 500 : 560;
@@ -73,6 +74,14 @@ function Home() {
     preparedNextRef.current = null;
   }
 
+  function blockNextClickBriefly() {
+    suppressClickRef.current = true;
+
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 350);
+  }
+
   function nextCardDesktop() {
     if (isChangingCard) return;
 
@@ -98,6 +107,15 @@ function Home() {
     setIsRevealed((prev) => !prev);
   }
 
+  function handleCardClick() {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+
+    flipCard();
+  }
+
   function handleTouchStart(event) {
     if (!isMobile || isChangingCard) return;
 
@@ -108,6 +126,7 @@ function Home() {
     currentXRef.current = 0;
     isDraggingRef.current = false;
     dragStartedRef.current = false;
+    suppressClickRef.current = false;
 
     const preparedNext = getRandomPrompt(
       currentPrompt?.id ?? null,
@@ -160,9 +179,13 @@ function Home() {
       setNextPrompt(null);
       setShowNextCard(false);
       resetSwipeRefs();
+
+      blockNextClickBriefly();
       flipCard();
       return;
     }
+
+    blockNextClickBriefly();
 
     if (passedSwipeThreshold && preparedNextRef.current) {
       setIsChangingCard(true);
@@ -369,7 +392,7 @@ function Home() {
 
             <div
               ref={frontCardRef}
-              onClick={isMobile ? undefined : flipCard}
+              onClick={handleCardClick}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
