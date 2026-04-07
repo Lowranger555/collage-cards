@@ -125,7 +125,8 @@ function Home() {
       }
     }
 
-    const limitedX = Math.max(-220, Math.min(0, deltaX));
+    // Только влево
+    const limitedX = Math.max(-190, Math.min(0, deltaX));
     setDragX(limitedX);
   }
 
@@ -139,7 +140,7 @@ function Home() {
     const absY = Math.abs(deltaY);
 
     const isTap = absX < 10 && absY < 10;
-    const passedSwipeThreshold = deltaX < -85 && Math.abs(deltaX) > absY;
+    const passedSwipeThreshold = deltaX < -80 && absX > absY;
 
     if (isTap) {
       setNextPrompt(null);
@@ -151,7 +152,7 @@ function Home() {
     if (passedSwipeThreshold && nextPrompt) {
       setIsChangingCard(true);
       setIsAnimatingOut(true);
-      setDragX(-(stageWidth + 140));
+      setDragX(-(stageWidth + 120));
 
       window.setTimeout(() => {
         setCurrentPrompt(nextPrompt);
@@ -159,11 +160,12 @@ function Home() {
         setIsRevealed(false);
         resetDragState();
         setIsChangingCard(false);
-      }, 320);
+      }, 260);
 
       return;
     }
 
+    // Возврат назад, если свайп слабый
     setDragX(0);
     setIsDragging(false);
     dragIntentRef.current = false;
@@ -172,12 +174,14 @@ function Home() {
       if (!isDragging && !isAnimatingOut) {
         setNextPrompt(null);
       }
-    }, 260);
+    }, 220);
   }
 
   const dragProgress = Math.min(Math.abs(dragX) / 140, 1);
-  const frontRotation = isMobile ? dragX * 0.045 : 0;
-  const frontLift = isMobile ? -dragProgress * 4 : 0;
+
+  // Фронтальная карта: мягче и спокойнее
+  const frontRotation = isMobile ? dragX * 0.035 : 0;
+  const frontLift = isMobile ? -dragProgress * 2 : 0;
 
   const frontTransform = isMobile
     ? `translate(${dragX}px, ${frontLift}px) rotate(${frontRotation}deg)`
@@ -188,14 +192,13 @@ function Home() {
   const frontTransition = isMobile
     ? isDragging
       ? "none"
-      : "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease"
+      : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease"
     : "transform 220ms ease, opacity 180ms ease";
 
-  const backCardScale = 0.955 + dragProgress * 0.045;
-  const backCardTranslateY = 14 - dragProgress * 14;
-  const backCardTranslateX = 10 - dragProgress * 10;
-  const backCardOpacity = nextPrompt ? 0.28 + dragProgress * 0.72 : 0;
-  const backCardRotation = dragX * -0.012;
+  // Следующая карта: строго по центру, без бокового увода
+  const backCardScale = 0.975 + dragProgress * 0.025;
+  const backCardTranslateY = 10 - dragProgress * 10;
+  const backCardOpacity = nextPrompt ? 0.2 + dragProgress * 0.8 : 0;
 
   return (
     <main
@@ -277,35 +280,39 @@ function Home() {
               overflow: "hidden"
             }}
           >
-            <div
-              style={{
-                position: "absolute",
-                width: `${cardWidth}px`,
-                height: `${cardHeight}px`,
-                borderRadius: "28px",
-                background: "rgba(255,255,255,0.02)",
-                left: "50%",
-                top: "50%",
-                transform: "translate(calc(-50% + 14px), calc(-50% + 9px)) rotate(4deg)",
-                transition: "transform 220ms ease",
-                pointerEvents: "none"
-              }}
-            />
+            {!isMobile && (
+              <>
+                <div
+                  style={{
+                    position: "absolute",
+                    width: `${cardWidth}px`,
+                    height: `${cardHeight}px`,
+                    borderRadius: "28px",
+                    background: "rgba(255,255,255,0.02)",
+                    left: "50%",
+                    top: "50%",
+                    transform: "translate(calc(-50% + 24px), calc(-50% + 14px)) rotate(4deg)",
+                    transition: "transform 220ms ease",
+                    pointerEvents: "none"
+                  }}
+                />
 
-            <div
-              style={{
-                position: "absolute",
-                width: `${cardWidth}px`,
-                height: `${cardHeight}px`,
-                borderRadius: "28px",
-                background: "rgba(255,255,255,0.03)",
-                left: "50%",
-                top: "50%",
-                transform: "translate(calc(-50% + 6px), calc(-50% + 4px)) rotate(2deg)",
-                transition: "transform 220ms ease",
-                pointerEvents: "none"
-              }}
-            />
+                <div
+                  style={{
+                    position: "absolute",
+                    width: `${cardWidth}px`,
+                    height: `${cardHeight}px`,
+                    borderRadius: "28px",
+                    background: "rgba(255,255,255,0.03)",
+                    left: "50%",
+                    top: "50%",
+                    transform: "translate(calc(-50% + 10px), calc(-50% + 6px)) rotate(2deg)",
+                    transition: "transform 220ms ease",
+                    pointerEvents: "none"
+                  }}
+                />
+              </>
+            )}
 
             {isMobile && nextPrompt ? (
               <div
@@ -315,14 +322,13 @@ function Home() {
                   height: `${cardHeight}px`,
                   left: "50%",
                   top: "50%",
-                  transform: `translate(calc(-50% + ${backCardTranslateX}px), calc(-50% + ${backCardTranslateY}px)) scale(${backCardScale}) rotate(${backCardRotation}deg)`,
+                  transform: `translate(-50%, calc(-50% + ${backCardTranslateY}px)) scale(${backCardScale})`,
                   opacity: backCardOpacity,
                   transition: isDragging
                     ? "none"
-                    : "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease",
+                    : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease",
                   pointerEvents: "none",
-                  zIndex: 1,
-                  filter: `blur(${(1 - dragProgress) * 0.4}px)`
+                  zIndex: 1
                 }}
               >
                 <PromptCard
