@@ -11,6 +11,9 @@ function Catalog() {
   const isMobile =
     typeof window !== "undefined" ? window.innerWidth < 760 : false;
 
+  const cardWidth = isMobile ? 320 : 360;
+  const cardHeight = isMobile ? 500 : 560;
+
   useEffect(() => {
     function handleResize() {
       if (window.innerWidth < 900) {
@@ -255,7 +258,7 @@ function Catalog() {
             display: "grid",
             gridTemplateColumns: isMobile
               ? "1fr"
-              : `repeat(${columns}, 360px)`,
+              : `repeat(${columns}, ${cardWidth}px)`,
             justifyContent: "center",
             gap: isMobile ? "20px" : "24px"
           }}
@@ -267,13 +270,17 @@ function Catalog() {
               <div
                 key={item.id}
                 onClick={() => toggleCard(item.id)}
-                onMouseEnter={() => setHoveredCardId(item.id)}
-                onMouseLeave={() => setHoveredCardId(null)}
+                onMouseEnter={() => {
+                  if (!isMobile) setHoveredCardId(item.id);
+                }}
+                onMouseLeave={() => {
+                  if (!isMobile) setHoveredCardId(null);
+                }}
                 style={{
                   cursor: "pointer",
-                  width: isMobile ? "100%" : "360px",
-                  maxWidth: isMobile ? "360px" : "360px",
-                  margin: isMobile ? "0 auto" : 0,
+                  width: isMobile ? `${cardWidth}px` : `${cardWidth}px`,
+                  maxWidth: "100%",
+                  margin: "0 auto",
                   transform:
                     !isMobile && isHovered
                       ? "translateY(-4px)"
@@ -284,6 +291,8 @@ function Catalog() {
                 <PromptCard
                   prompt={item}
                   isRevealed={!!revealedCards[item.id]}
+                  width={cardWidth}
+                  height={cardHeight}
                 />
               </div>
             );
