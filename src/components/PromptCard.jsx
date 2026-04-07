@@ -24,6 +24,7 @@ function PromptCard({
   const CARD_WIDTH = width;
   const CARD_HEIGHT = height;
   const CARD_PADDING = width <= 320 ? 16 : 18;
+
   const isCompact = width <= 320;
 
   const topRowStyle = {
@@ -78,22 +79,11 @@ function PromptCard({
     height: `${CARD_HEIGHT}px`,
     boxSizing: "border-box",
     borderRadius: "28px",
-    overflow: "visible",
+    overflow: "hidden",
     position: "relative",
     flexShrink: 0,
-    perspective: "1400px"
-  };
-
-  const cardSurfaceStyle = {
-    position: "absolute",
-    inset: 0,
-    borderRadius: "28px",
-    overflow: "hidden",
     boxShadow:
-      "0 0 0 1px rgba(255,255,255,0.11), inset 0 0 0 1px rgba(255,255,255,0.02)",
-    backfaceVisibility: "hidden",
-    WebkitBackfaceVisibility: "hidden",
-    transformStyle: "preserve-3d"
+      "0 0 0 1px rgba(255,255,255,0.11), inset 0 0 0 1px rgba(255,255,255,0.02)"
   };
 
   const categoryImageMap = {
@@ -142,324 +132,308 @@ function PromptCard({
     );
   }
 
-  return (
-    <div style={cardBaseStyle}>
+  if (!isRevealed) {
+    return (
       <div
         style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          transformStyle: "preserve-3d",
-          transition: "transform 720ms cubic-bezier(0.22, 1, 0.36, 1)",
-          transform: isRevealed ? "rotateY(180deg)" : "rotateY(0deg)"
+          ...cardBaseStyle,
+          background: "#101010"
         }}
       >
+        {coverImage ? (
+          <img
+            src={coverImage}
+            alt={categoryLabels[prompt.category] || prompt.category}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover"
+            }}
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+        ) : null}
+
         <div
           style={{
-            ...cardSurfaceStyle,
-            background: "#101010",
-            transform: "rotateY(0deg)"
+            position: "absolute",
+            inset: 0,
+            background: coverImage
+              ? `
+                linear-gradient(
+                  180deg,
+                  rgba(0,0,0,0.58) 0%,
+                  rgba(0,0,0,0.22) 18%,
+                  rgba(0,0,0,0.12) 42%,
+                  rgba(0,0,0,0.22) 60%,
+                  rgba(0,0,0,0.78) 84%,
+                  rgba(0,0,0,0.92) 100%
+                )
+              `
+              : `
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.16), transparent 30%),
+                radial-gradient(circle at 80% 30%, rgba(255,255,255,0.10), transparent 28%),
+                radial-gradient(circle at 50% 70%, rgba(255,255,255,0.08), transparent 30%),
+                linear-gradient(135deg, #2a2a2a 0%, #171717 35%, #0f0f0f 100%)
+              `
           }}
-        >
-          {coverImage ? (
-            <img
-              src={coverImage}
-              alt={categoryLabels[prompt.category] || prompt.category}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover"
-              }}
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
-          ) : null}
+        />
 
+        {!coverImage && (
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background: coverImage
-                ? `
-                  linear-gradient(
-                    180deg,
-                    rgba(0,0,0,0.58) 0%,
-                    rgba(0,0,0,0.22) 18%,
-                    rgba(0,0,0,0.12) 42%,
-                    rgba(0,0,0,0.22) 60%,
-                    rgba(0,0,0,0.78) 84%,
-                    rgba(0,0,0,0.92) 100%
-                  )
-                `
-                : `
-                  radial-gradient(circle at 20% 20%, rgba(255,255,255,0.16), transparent 30%),
-                  radial-gradient(circle at 80% 30%, rgba(255,255,255,0.10), transparent 28%),
-                  radial-gradient(circle at 50% 70%, rgba(255,255,255,0.08), transparent 30%),
-                  linear-gradient(135deg, #2a2a2a 0%, #171717 35%, #0f0f0f 100%)
-                `
+              background:
+                "linear-gradient(180deg, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.22) 18%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0.22) 60%, rgba(0,0,0,0.78) 84%, rgba(0,0,0,0.92) 100%)"
             }}
           />
+        )}
 
-          {!coverImage && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(180deg, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.22) 18%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0.22) 60%, rgba(0,0,0,0.78) 84%, rgba(0,0,0,0.92) 100%)"
-              }}
-            />
-          )}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            width: "100%",
+            height: "100%",
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+            padding: `${CARD_PADDING}px`
+          }}
+        >
+          <div style={topRowStyle}>
+            <div style={labelStyle}>Коллажная карта</div>
+            <div style={coverCategoryStyle}>
+              {categoryLabels[prompt.category] || prompt.category}
+            </div>
+          </div>
+
+          <div style={{ flex: 1 }} />
 
           <div
             style={{
-              position: "relative",
-              zIndex: 2,
-              width: "100%",
-              height: "100%",
-              boxSizing: "border-box",
               display: "flex",
               flexDirection: "column",
-              padding: `${CARD_PADDING}px`
+              justifyContent: "flex-end",
+              gap: showCoverTitle ? "8px" : "6px",
+              flexShrink: 0
             }}
           >
-            <div style={topRowStyle}>
-              <div style={labelStyle}>Коллажная карта</div>
-              <div style={coverCategoryStyle}>
-                {categoryLabels[prompt.category] || prompt.category}
-              </div>
-            </div>
-
-            <div style={{ flex: 1 }} />
+            {showCoverTitle && (
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: isCompact ? "30px" : "38px",
+                  lineHeight: 0.95,
+                  letterSpacing: "-0.05em",
+                  color: "white",
+                  maxWidth: "92%",
+                  textShadow: "0 2px 10px rgba(0,0,0,0.45)"
+                }}
+              >
+                {prompt.title}
+              </h2>
+            )}
 
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                gap: showCoverTitle ? "8px" : "6px",
-                flexShrink: 0
+                fontSize: showCoverTitle ? (isCompact ? "10px" : "11px") : "16px",
+                lineHeight: showCoverTitle ? 1.35 : 1.25,
+                color: "rgba(255,255,255,0.86)",
+                maxWidth: showCoverTitle ? "88%" : "75%",
+                textShadow: "0 2px 10px rgba(0,0,0,0.45)",
+                fontWeight: showCoverTitle ? "400" : "600"
               }}
             >
-              {showCoverTitle && (
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: isCompact ? "30px" : "38px",
-                    lineHeight: 0.95,
-                    letterSpacing: "-0.05em",
-                    color: "white",
-                    maxWidth: "92%",
-                    textShadow: "0 2px 10px rgba(0,0,0,0.45)"
-                  }}
-                >
-                  {prompt.title}
-                </h2>
-              )}
-
-              <div
-                style={{
-                  fontSize: showCoverTitle ? (isCompact ? "10px" : "11px") : "16px",
-                  lineHeight: showCoverTitle ? 1.35 : 1.25,
-                  color: "rgba(255,255,255,0.86)",
-                  maxWidth: showCoverTitle ? "88%" : "75%",
-                  textShadow: "0 2px 10px rgba(0,0,0,0.45)",
-                  fontWeight: showCoverTitle ? "400" : "600"
-                }}
-              >
-                {showCoverTitle
-                  ? "Нажми на карту, чтобы открыть задание"
-                  : "Открой задание"}
-              </div>
+              {showCoverTitle
+                ? "Нажми на карту, чтобы открыть задание"
+                : "Открой задание"}
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        ...cardBaseStyle,
+        background: "linear-gradient(180deg, #151515 0%, #0f0f0f 100%)"
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          zIndex: 2,
+          width: "100%",
+          height: "100%",
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          padding: `${CARD_PADDING}px`
+        }}
+      >
+        <div style={topRowStyle}>
+          <div style={labelStyle}>Коллажная карта</div>
+          <div style={backCategoryStyle}>
+            {categoryLabels[prompt.category] || prompt.category}
           </div>
         </div>
 
         <div
           style={{
-            ...cardSurfaceStyle,
-            background: "linear-gradient(180deg, #151515 0%, #0f0f0f 100%)",
-            transform: "rotateY(180deg)"
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column"
           }}
         >
-          <div
+          <h2
             style={{
-              position: "relative",
-              zIndex: 2,
-              width: "100%",
-              height: "100%",
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "column",
-              padding: `${CARD_PADDING}px`
+              margin: "0 0 12px 0",
+              fontSize: isCompact ? "28px" : "36px",
+              lineHeight: 0.95,
+              letterSpacing: "-0.05em",
+              color: "white",
+              maxWidth: "92%"
             }}
           >
-            <div style={topRowStyle}>
-              <div style={labelStyle}>Коллажная карта</div>
-              <div style={backCategoryStyle}>
-                {categoryLabels[prompt.category] || prompt.category}
-              </div>
-            </div>
+            {prompt.title}
+          </h2>
 
+          <p
+            style={{
+              margin: "0 0 16px 0",
+              color: "#d2d2d2",
+              fontSize: isCompact ? "13px" : "14px",
+              lineHeight: 1.4,
+              maxWidth: "95%"
+            }}
+          >
+            {prompt.prompt}
+          </p>
+
+          <div
+            style={{
+              display: "grid",
+              gap: "12px",
+              flexShrink: 0
+            }}
+          >
             <div
               style={{
-                flex: 1,
-                minHeight: 0,
-                display: "flex",
-                flexDirection: "column"
+                padding: isCompact ? "12px 14px" : "14px 16px",
+                borderRadius: "18px",
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                minHeight: isCompact ? "88px" : "98px",
+                boxSizing: "border-box"
               }}
             >
-              <h2
-                style={{
-                  margin: "0 0 12px 0",
-                  fontSize: isCompact ? "28px" : "36px",
-                  lineHeight: 0.95,
-                  letterSpacing: "-0.05em",
-                  color: "white",
-                  maxWidth: "92%"
-                }}
-              >
-                {prompt.title}
-              </h2>
-
-              <p
-                style={{
-                  margin: "0 0 16px 0",
-                  color: "#d2d2d2",
-                  fontSize: isCompact ? "13px" : "14px",
-                  lineHeight: 1.4,
-                  maxWidth: "95%"
-                }}
-              >
-                {prompt.prompt}
-              </p>
-
               <div
                 style={{
-                  display: "grid",
-                  gap: "12px",
-                  flexShrink: 0
+                  fontSize: "10px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
+                  color: "#7f7f7f",
+                  marginBottom: "8px"
                 }}
               >
-                <div
-                  style={{
-                    padding: isCompact ? "12px 14px" : "14px 16px",
-                    borderRadius: "18px",
-                    background: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                    minHeight: isCompact ? "88px" : "98px",
-                    boxSizing: "border-box"
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "10px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.12em",
-                      color: "#7f7f7f",
-                      marginBottom: "8px"
-                    }}
-                  >
-                    Ограничение
-                  </div>
-                  <div
-                    style={{
-                      color: "#f1f1f1",
-                      lineHeight: 1.4,
-                      fontSize: isCompact ? "13px" : "14px"
-                    }}
-                  >
-                    {prompt.limitation}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    padding: isCompact ? "12px 14px" : "14px 16px",
-                    borderRadius: "18px",
-                    background: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                    minHeight: isCompact ? "88px" : "98px",
-                    boxSizing: "border-box"
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "10px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.12em",
-                      color: "#7f7f7f",
-                      marginBottom: "8px"
-                    }}
-                  >
-                    Подсказка
-                  </div>
-                  <div
-                    style={{
-                      color: "#f1f1f1",
-                      lineHeight: 1.4,
-                      fontSize: isCompact ? "13px" : "14px"
-                    }}
-                  >
-                    {prompt.hint}
-                  </div>
-                </div>
+                Ограничение
               </div>
-
-              <div style={{ flex: 1 }} />
+              <div
+                style={{
+                  color: "#f1f1f1",
+                  lineHeight: 1.4,
+                  fontSize: isCompact ? "13px" : "14px"
+                }}
+              >
+                {prompt.limitation}
+              </div>
             </div>
 
             <div
               style={{
-                marginTop: "16px",
-                paddingTop: "16px",
-                borderTop: "1px solid rgba(255,255,255,0.06)",
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "10px",
-                flexWrap: "wrap",
-                flexShrink: 0
+                padding: isCompact ? "12px 14px" : "14px 16px",
+                borderRadius: "18px",
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                minHeight: isCompact ? "88px" : "98px",
+                boxSizing: "border-box"
               }}
             >
-              <div>
-                <div
-                  style={{
-                    fontSize: "10px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    color: "#7f7f7f",
-                    marginBottom: "6px"
-                  }}
-                >
-                  Сложность
-                </div>
-                <DifficultyDots filledCount={filledDifficultyDots} />
+              <div
+                style={{
+                  fontSize: "10px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
+                  color: "#7f7f7f",
+                  marginBottom: "8px"
+                }}
+              >
+                Подсказка
               </div>
+              <div
+                style={{
+                  color: "#f1f1f1",
+                  lineHeight: 1.4,
+                  fontSize: isCompact ? "13px" : "14px"
+                }}
+              >
+                {prompt.hint}
+              </div>
+            </div>
+          </div>
 
-              <div>
-                <div
-                  style={{
-                    fontSize: "10px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    color: "#7f7f7f",
-                    marginBottom: "6px"
-                  }}
-                >
-                  Время
-                </div>
-                <div
-                  style={{
-                    color: "white",
-                    fontSize: isCompact ? "14px" : "15px"
-                  }}
-                >
-                  {prompt.duration} мин
-                </div>
-              </div>
+          <div style={{ flex: 1 }} />
+        </div>
+
+        <div
+          style={{
+            marginTop: "16px",
+            paddingTop: "16px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "10px",
+            flexWrap: "wrap",
+            flexShrink: 0
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                color: "#7f7f7f",
+                marginBottom: "6px"
+              }}
+            >
+              Сложность
+            </div>
+            <DifficultyDots filledCount={filledDifficultyDots} />
+          </div>
+
+          <div>
+            <div
+              style={{
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                color: "#7f7f7f",
+                marginBottom: "6px"
+              }}
+            >
+              Время
+            </div>
+            <div style={{ color: "white", fontSize: isCompact ? "14px" : "15px" }}>
+              {prompt.duration} мин
             </div>
           </div>
         </div>

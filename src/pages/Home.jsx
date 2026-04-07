@@ -13,17 +13,19 @@ function Home() {
 
   const [currentPrompt, setCurrentPrompt] = useState(initialPrompt);
   const [nextPrompt, setNextPrompt] = useState(null);
+  const [showNextCard, setShowNextCard] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isChangingCard, setIsChangingCard] = useState(false);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
-  const [dragX, setDragX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const frontCardRef = useRef(null);
 
-  const touchStartRef = useRef({ x: 0, y: 0 });
-  const touchCurrentRef = useRef({ x: 0, y: 0 });
-  const dragIntentRef = useRef(false);
+  const startXRef = useRef(0);
+  const startYRef = useRef(0);
+  const currentXRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const dragStartedRef = useRef(false);
+  const preparedNextRef = useRef(null);
 
   const cardWidth = isMobile ? 320 : 360;
   const cardHeight = isMobile ? 500 : 560;
@@ -51,11 +53,24 @@ function Home() {
     return pool[randomIndex];
   }
 
-  function resetSwipeState() {
-    setDragX(0);
-    setIsDragging(false);
-    setIsAnimatingOut(false);
-    dragIntentRef.current = false;
+  function setFrontCardStyle({
+    x = 0,
+    rotation = 0,
+    opacity = 1,
+    transition = "none"
+  }) {
+    if (!frontCardRef.current) return;
+
+    frontCardRef.current.style.transition = transition;
+    frontCardRef.current.style.transform = `translateX(${x}px) rotate(${rotation}deg)`;
+    frontCardRef.current.style.opacity = `${opacity}`;
+  }
+
+  function resetSwipeRefs() {
+    currentXRef.current = 0;
+    isDraggingRef.current = false;
+    dragStartedRef.current = false;
+    preparedNextRef.current = null;
   }
 
   function nextCardDesktop() {
@@ -79,131 +94,141 @@ function Home() {
   }
 
   function flipCard() {
-    if (isChangingCard || isDragging || isAnimatingOut) return;
+    if (isChangingCard || isDraggingRef.current) return;
     setIsRevealed((prev) => !prev);
   }
 
   function handleTouchStart(event) {
-    if (!isMobile || isChangingCard || isAnimatingOut) return;
+    if (!isMobile || isChangingCard) return;
 
     const touch = event.touches[0];
-    touchStartRef.current = {
-      x: touch.clientX,
-      y: touch.clientY
-    };
-    touchCurrentRef.current = {
-      x: touch.clientX,
-      y: touch.clientY
-    };
-    dragIntentRef.current = false;
+
+    startXRef.current = touch.clientX;
+    startYRef.current = touch.clientY;
+    currentXRef.current = 0;
+    isDraggingRef.current = false;
+    dragStartedRef.current = false;
 
     const preparedNext = getRandomPrompt(
       currentPrompt?.id ?? null,
       currentPrompt?.category ?? null
     );
+
+    preparedNextRef.current = preparedNext;
     setNextPrompt(preparedNext);
+    setShowNextCard(false);
   }
 
   function handleTouchMove(event) {
-    if (!isMobile || isChangingCard || isAnimatingOut) return;
+    if (!isMobile || isChangingCard) return;
 
     const touch = event.touches[0];
-    touchCurrentRef.current = {
-      x: touch.clientX,
-      y: touch.clientY
-    };
+    const deltaX = touch.clientX - startXRef.current;
+    const deltaY = touch.clientY - startYRef.current;
 
-    const deltaX = touch.clientX - touchStartRef.current.x;
-    const deltaY = touch.clientY - touchStartRef.current.y;
-
-    if (!dragIntentRef.current) {
+    if (!dragStartedRef.current) {
       if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
-        dragIntentRef.current = true;
-        setIsDragging(true);
+        dragStartedRef.current = true;
+        isDraggingRef.current = true;
+        setShowNextCard(true);
       } else {
         return;
       }
     }
 
-    // только влево
-    const limitedX = Math.max(-220, Math.min(0, deltaX));
-    setDragX(limitedX);
+    const limitedX = Math.max(-280, Math.min(0, deltaX));
+    currentXRef.current = limitedX;
+
+    const rotation = limitedX * 0.03;
+
+    setFrontCardStyle({
+      x: limitedX,
+      rotation,
+      opacity: 1,
+      transition: "none"
+    });
   }
 
   function handleTouchEnd() {
-    if (!isMobile || isChangingCard || isAnimatingOut) return;
+    if (!isMobile || isChangingCard) return;
 
-    const deltaX = touchCurrentRef.current.x - touchStartRef.current.x;
-    const deltaY = touchCurrentRef.current.y - touchStartRef.current.y;
-
-    const absX = Math.abs(deltaX);
-    const absY = Math.abs(deltaY);
-
-    const isTap = absX < 10 && absY < 10;
-    const passedSwipeThreshold = deltaX < -80 && absX > absY;
+    const deltaX = currentXRef.current;
+    const isTap = !dragStartedRef.current;
+    const passedSwipeThreshold = deltaX < -70;
 
     if (isTap) {
       setNextPrompt(null);
-      resetSwipeState();
+      setShowNextCard(false);
+      resetSwipeRefs();
       flipCard();
       return;
     }
 
-    if (passedSwipeThreshold && nextPrompt) {
+    if (passedSwipeThreshold && preparedNextRef.current) {
       setIsChangingCard(true);
-      setIsAnimatingOut(true);
 
       const exitDistance =
         typeof window !== "undefined"
-          ? -(window.innerWidth + cardWidth)
-          : -(stageWidth + 240);
+          ? -(window.innerWidth + cardWidth + 260)
+          : -(stageWidth + cardWidth + 260);
 
-      setDragX(exitDistance);
+      setFrontCardStyle({
+        x: exitDistance,
+        rotation: -18,
+        opacity: 1,
+        transition: "transform 320ms cubic-bezier(0.16, 1, 0.3, 1)"
+      });
 
       window.setTimeout(() => {
-        setCurrentPrompt(nextPrompt);
-        setNextPrompt(null);
+        const next = preparedNextRef.current;
+        if (!next) return;
+
+        if (frontCardRef.current) {
+          frontCardRef.current.style.transition = "none";
+          frontCardRef.current.style.opacity = "0";
+        }
+
+        setCurrentPrompt(next);
         setIsRevealed(false);
-        resetSwipeState();
-        setIsChangingCard(false);
-      }, 220);
+
+        requestAnimationFrame(() => {
+          if (frontCardRef.current) {
+            frontCardRef.current.style.transition = "none";
+            frontCardRef.current.style.transform = "translateX(0px) rotate(0deg)";
+          }
+
+          requestAnimationFrame(() => {
+            setShowNextCard(false);
+            setNextPrompt(null);
+            resetSwipeRefs();
+
+            requestAnimationFrame(() => {
+              if (frontCardRef.current) {
+                frontCardRef.current.style.opacity = "1";
+              }
+
+              setIsChangingCard(false);
+            });
+          });
+        });
+      }, 320);
 
       return;
     }
 
-    // мягкий возврат
-    setDragX(0);
-    setIsDragging(false);
-    dragIntentRef.current = false;
+    setFrontCardStyle({
+      x: 0,
+      rotation: 0,
+      opacity: 1,
+      transition: "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)"
+    });
 
     window.setTimeout(() => {
-      if (!isDragging && !isAnimatingOut) {
-        setNextPrompt(null);
-      }
-    }, 180);
+      setShowNextCard(false);
+      setNextPrompt(null);
+      resetSwipeRefs();
+    }, 220);
   }
-
-  const dragProgress = Math.min(Math.abs(dragX) / 140, 1);
-
-  const frontRotation = isMobile ? dragX * 0.03 : 0;
-  const frontTransform = isMobile
-    ? `translateX(${dragX}px) rotate(${frontRotation}deg)`
-    : isChangingCard
-    ? "translate(4px, 6px)"
-    : "translate(0px, 0px)";
-
-  const frontOpacity = isMobile && isAnimatingOut ? 0.94 : 1;
-
-  const frontTransition = isMobile
-    ? isDragging
-      ? "none"
-      : "transform 200ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease"
-    : "transform 220ms ease, opacity 180ms ease";
-
-  // следующая карта всегда по центру, без бокового смещения и без поворота
-  const backCardScale = 0.985 + dragProgress * 0.015;
-  const backCardTranslateY = 8 - dragProgress * 8;
-  const backCardOpacity = nextPrompt ? 0.18 + dragProgress * 0.82 : 0;
 
   return (
     <main
@@ -298,11 +323,9 @@ function Home() {
                     top: "50%",
                     transform:
                       "translate(calc(-50% + 24px), calc(-50% + 14px)) rotate(4deg)",
-                    transition: "transform 220ms ease",
                     pointerEvents: "none"
                   }}
                 />
-
                 <div
                   style={{
                     position: "absolute",
@@ -314,14 +337,13 @@ function Home() {
                     top: "50%",
                     transform:
                       "translate(calc(-50% + 10px), calc(-50% + 6px)) rotate(2deg)",
-                    transition: "transform 220ms ease",
                     pointerEvents: "none"
                   }}
                 />
               </>
             )}
 
-            {isMobile && nextPrompt ? (
+            {isMobile && showNextCard && nextPrompt && (
               <div
                 style={{
                   position: "absolute",
@@ -329,16 +351,13 @@ function Home() {
                   height: `${cardHeight}px`,
                   left: "50%",
                   top: "50%",
-                  transform: `translate(-50%, calc(-50% + ${backCardTranslateY}px)) scale(${backCardScale})`,
-                  opacity: backCardOpacity,
-                  transition: isDragging
-                    ? "none"
-                    : "transform 180ms ease, opacity 140ms ease",
+                  transform: "translate(-50%, -50%)",
                   pointerEvents: "none",
                   zIndex: 1
                 }}
               >
                 <PromptCard
+                  key={`next-${nextPrompt.id}`}
                   prompt={nextPrompt}
                   isRevealed={false}
                   showCoverTitle={true}
@@ -346,9 +365,10 @@ function Home() {
                   height={cardHeight}
                 />
               </div>
-            ) : null}
+            )}
 
             <div
+              ref={frontCardRef}
               onClick={isMobile ? undefined : flipCard}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -360,13 +380,13 @@ function Home() {
                 cursor: isChangingCard ? "default" : "pointer",
                 zIndex: 2,
                 touchAction: "pan-y",
-                transform: frontTransform,
-                opacity: frontOpacity,
-                transition: frontTransition,
-                willChange: "transform"
+                transform: "translateX(0px) rotate(0deg)",
+                opacity: 1,
+                willChange: "transform, opacity"
               }}
             >
               <PromptCard
+                key={`current-${currentPrompt.id}`}
                 prompt={currentPrompt}
                 isRevealed={isRevealed}
                 showCoverTitle={true}
@@ -386,7 +406,7 @@ function Home() {
                 letterSpacing: "0.01em"
               }}
             >
-              ← Потяни карту влево, чтобы достать новую
+              ← Свайпни влево, чтобы достать новую карту
             </div>
           ) : (
             <button
